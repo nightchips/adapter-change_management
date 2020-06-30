@@ -252,7 +252,45 @@ class ServiceNowAdapter extends EventEmitter {
      * Note how the object was instantiated in the constructor().
      * post() takes a callback function.
      */
-    this.connector.post(callback);
+    let recordData = {
+        change_ticket_number: null,
+        active: null,
+        priority: null,
+        description: null,
+        work_start: null,
+        work_end: null,
+        change_ticket_key: null,
+     };
+     
+     let bodyData = {};
+     let resultData = {};
+     
+     this.connector.post((data, error) => {
+        if (error) {
+            log.error(`\nError returned from POST request:\n${JSON.stringify(error)}`);
+            callback(error);
+        } else {
+            log.info(`\nResponse returned from POST request:\n${JSON.stringify(data)}`);
+            if(data.hasOwnProperty('body') === true){
+                bodyData = JSON.parse(data.body);
+                if(bodyData.hasOwnProperty('result') === true){
+                    resultData = bodyData.result;
+                    recordData.change_ticket_number = resultData.number;
+                    recordData.active = resultData.active;
+                    recordData.priority = resultData.priority;
+                    recordData.description = resultData.description;
+                    recordData.work_start = resultData.work_start;
+                    recordData.work_end = resultData.work_end;
+                    recordData.change_ticket_key = resultData.sys_id;
+                } else {
+                    outRecords.push("Missing Data Results");
+                }
+            } else {
+                outRecords.push("Missing Data Body");
+            }
+            callback(recordData);
+        }
+     });
   }
 }
 
